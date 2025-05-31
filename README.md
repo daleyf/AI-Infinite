@@ -1,7 +1,7 @@
 # AI-Infinite
 
 > A “infinite” LLM loop that never stops.  
-> Continuously generates tokens from an initial AGI prompt, while managing both short-term and long-term memory.
+> Continuously generates tokens from an initial prompt, while managing both short-term and long-term memory.
 
 ---
 
