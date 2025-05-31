@@ -23,6 +23,7 @@ env/
 
 # Logs
 *.log
+logs/stream.txt
 
 # Output / artifacts
 *.out
