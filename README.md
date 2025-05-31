@@ -18,6 +18,6 @@ This project demonstrates how to:
 ## Quick Start
 
 1. Clone or download this repo
-2. Setup OpenAI key env in terminal
-```export OPENAI_API_KEY= "YOUR_API_KEY"
+2. Setup OpenAI key env in terminal:
+```export OPENAI_API_KEY= "YOUR_API_KEY"```
 
