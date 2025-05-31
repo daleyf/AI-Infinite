@@ -17,7 +17,7 @@ This project demonstrates how to:
 
 ## Quick Start
 
-1. Clone or download this repo:
-
-   (don't actually, none of this is working lol)
+1. Clone or download this repo
+2. Setup OpenAI key env in terminal
+```export OPENAI_API_KEY= "YOUR_API_KEY"
 

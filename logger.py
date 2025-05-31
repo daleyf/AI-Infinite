@@ -1,25 +1,26 @@
-"""
-logger.py
-
-Simple logging utility to write each generated “token” or chunk to disk, 
-with timestamps and an ever-growing stream of GPT’s output.
-"""
-
 import os
-import datetime
+from datetime import datetime
 from config import LOG_DIR, STREAM_LOG_FILE
 from utils import ensure_dir_exists
 
-# Ensure the log directory exists:
+
 ensure_dir_exists(LOG_DIR)
 
 def log_text(text: str) -> None:
-    """
-    log_text(text) -> None
+    from datetime import datetime
+    now = datetime.now()
+    time_str = now.strftime("%I:%M%p").lower()
+    day_str = now.strftime("%m-%d")
 
-    Append `text` to the global stream log file, prefixed by a timestamp.
-    Each call writes one “chunk” of generated text.
-    """
-    timestamp = datetime.datetime.now().isoformat()
+    time_and_date = f"time: {time_str}\nday: {day_str}\n"
+
+    # Save to file
     with open(STREAM_LOG_FILE, "a", encoding="utf-8") as f:
-        f.write(f"[{timestamp}] {text}\n\n")
+        f.write(time_and_date + "\n" + text + "\n\n")
+
+    # Print cleanly to terminal
+    print(time_and_date)     # ✅ Prints on two lines
+    print(text.strip())      # ✅ Prints your log content
+    print("=" * 40)
+    
+

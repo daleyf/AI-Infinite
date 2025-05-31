@@ -1,0 +1,54 @@
+# macOS system files
+.DS_Store
+
+# Byte-compiled / optimized / DLL Python files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+env/
+.venv/
+.env/
+
+# VS Code settings
+.vscode/
+
+# PyCharm
+.idea/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Logs
+*.log
+
+# Output / artifacts
+*.out
+*.aux
+*.toc
+
+# Cache files
+.cache/
+*.egg-info/
+
+# Config files and secrets (if you use them)
+config.py
+*.env
+*.key
+*.pem
+*.pkl
+
+# Coverage / test / build
+htmlcov/
+.tox/
+.coverage
+coverage.xml
+*.egg
+dist/
+build/
+
+# Local SQLite or other scratch files
+*.db
+*.sqlite3

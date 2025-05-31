@@ -80,4 +80,4 @@ def persist_vector_store() -> None:
 
     Flush Chroma’s data to disk. Call this before shutting down if you want to keep the memory.
     """
-    client.persist()
+    collection.persist()

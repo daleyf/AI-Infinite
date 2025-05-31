@@ -7,7 +7,7 @@ and retrieval so that the never-ending GPT loop remains coherent over time.
 
 import time
 import uuid
-import openai
+from openai import OpenAI
 from typing import List
 from config import (
     CONTEXT_WINDOW_TOKENS,
@@ -20,7 +20,7 @@ from summarizer import summarize_text
 from vector_store import add_memory_chunk, query_similar_memory
 
 # Initialize OpenAI
-openai.api_key = OPENAI_API_KEY
+OpenAI.api_key = OPENAI_API_KEY
 
 class MemoryManager:
     """

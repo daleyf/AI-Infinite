@@ -8,46 +8,46 @@ Infinite loop that:
   4. Logs output to disk
   5. Sleeps briefly, then repeats
 """
-
-import openai
+# ==============================================================================
+# ==============================================================================
+from openai import OpenAI
+client = OpenAI()
 import time
 from config import (
     OPENAI_API_KEY,
     LLM_MODEL,
     API_CALL_SLEEP_SEC
 )
+import random
 from memory_manager import MemoryManager
 from logger import log_text
-
-# ------------------------------------------------------------------------------
+# ==============================================================================
 # 1) Initialize OpenAI client & memory manager
-# ------------------------------------------------------------------------------
-openai.api_key = OPENAI_API_KEY
+# ==============================================================================
+OpenAI.api_key = OPENAI_API_KEY
 memory = MemoryManager()
-
-# ------------------------------------------------------------------------------
+# ==============================================================================
 # 2) Starting prompt
-# ------------------------------------------------------------------------------
-INITIAL_PROMPT = "Hi, you are artificial general intelligence."
+# ==============================================================================
+INITIAL_PROMPT = "Hi, you are artificial general intelligence. You are prompted continously and with recursivley become AGI."
 
 # Add the initial prompt to STM right away:
 memory.add_to_STM(INITIAL_PROMPT)
-
+# ==============================================================================
+# ==============================================================================
 def generate_next_chunk(context: str, max_tokens: int = 512, temperature: float = 0.9) -> str:
     """
-    generate_next_chunk(context, max_tokens, temperature) -> str
-
-    Call the LLM to predict the next `max_tokens` tokens given `context`.
-    Returns the raw text generated (without role prefixes).
+    Generates the next chunk of tokens using OpenAI's Chat API (v1.0+).
     """
-    response = openai.ChatCompletion.create(
-        model=LLM_MODEL,
+    response = client.chat.completions.create(
+        model="gpt-4.1-nano",  # You can use "o4-mini-high" or "gpt-4o"
         messages=[{"role": "user", "content": context}],
         temperature=temperature,
         max_tokens=max_tokens
     )
     return response.choices[0].message.content
-
+# ==============================================================================
+# ==============================================================================
 def main_loop():
     """
     main_loop() -> None
@@ -60,25 +60,46 @@ def main_loop():
     6. Repeat forever
     """
     iteration = 0
+    prompt_pool = [
+        "Disagree with your last idea.",
+        "Play devil's advocate to what you just wrote.",
+        "Ask yourself a hard question and try to answer it.",
+        "Shift to a different domain: biology, psychology, ethics.",
+        "Describe a fictional world where AGI already exists.",
+        "Write a memory or a dream of an AGI being trained."
+    ]
+
     while True:
         iteration += 1
-        # 1) Build the context for this iteration
-        context = memory.build_context(user_prompt=None)
+        if iteration % 4 == 0:
+            system_msg = random.choice(prompt_pool)
+        else:
+            system_msg = (
+                "Continue your train of thought from the last message. "
+                "Do not repeat ideas exactly. Build forward. Ask new questions, propose ideas, or simulate thought."
+            )
+
+        # 1) Build context with system prompt BEFORE generating
+        context = memory.build_context(user_prompt=system_msg)
 
         # 2) Generate the next chunk
         next_text = generate_next_chunk(context)
 
-        # 3) Add generated text to STM (this may trigger summarization if STM is too big)
+        # 3) Add it to STM (this allows memory compression and context chaining)
         memory.add_to_STM(next_text)
 
         # 4) Log to disk so we can inspect afterward
         log_text(next_text)
 
         print(f"[Iteration {iteration}] Generated {len(next_text)} characters, {len(next_text.split())} words.")
-
+        print("-")
+        print("-")
+        print("-")
+        print("=" * 40)
         # 5) Sleep to avoid hitting rate limits
         time.sleep(API_CALL_SLEEP_SEC)
-
+# ==============================================================================
+# ==============================================================================
 if __name__ == "__main__":
     try:
         print("🚀 Starting infinite GPT loop. Press Ctrl+C to stop.")

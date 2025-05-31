@@ -1,4 +1,4 @@
-openai>=0.27.0          # OpenAI Python SDK
+openai>=1.0.0           # OpenAI Python SDK
 tiktoken>=0.5.0         # Token counting compatible with OpenAI models
 chromadb>=0.7.0         # Local vector database for embeddings
 python-dotenv>=1.0.0    # Load .env file (optional)

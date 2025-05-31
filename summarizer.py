@@ -4,12 +4,13 @@ summarizer.py
 Functions to compress large text into a concise “memory chunk” using GPT.
 """
 
-import openai
+from openai import OpenAI
+client = OpenAI()
 from config import LLM_MODEL, OPENAI_API_KEY
 from utils import count_tokens, chunk_text_by_tokens
 
 # Initialize the OpenAI client
-openai.api_key = OPENAI_API_KEY
+OpenAI.api_key = OPENAI_API_KEY
 
 def summarize_text(text: str, max_tokens: int = 512) -> str:
     """
@@ -26,11 +27,12 @@ def summarize_text(text: str, max_tokens: int = 512) -> str:
     Returns:
       A string that is the approximate summary of `text`.
     """
+    LLM_MODEL = "gpt-4.1-nano"
     # 1) If text is small enough, call GPT directly:
     if count_tokens(text) < 6_000:  # choose a threshold comfortably under the model’s input limit
         prompt = f"Please provide a concise summary (1–2 paragraphs) of the following text:\n\n{text}"
-        response = openai.ChatCompletion.create(
-            model=LLM_MODEL,
+        response = client.chat.completions.create(
+            model=LLM_MODEL,  # or whatever summarization model you're using
             messages=[{"role": "user", "content": prompt}],
             temperature=0.3,
             max_tokens=max_tokens
@@ -45,11 +47,11 @@ def summarize_text(text: str, max_tokens: int = 512) -> str:
             f"Chunk {i+1}/{len(chunks)}: "
             "Summarize the following text into 1 paragraph:\n\n" + c
         )
-        resp = openai.ChatCompletion.create(
+        resp = client.chat.completions.create(
             model=LLM_MODEL,
             messages=[{"role": "user", "content": prompt_chunk}],
             temperature=0.3,
-            max_tokens= max_tokens // len(chunks)
+            max_tokens=max_tokens // len(chunks)
         )
         partial_summaries.append(resp.choices[0].message.content.strip())
 
@@ -59,7 +61,7 @@ def summarize_text(text: str, max_tokens: int = 512) -> str:
         "The following are partial summaries of a longer document. "
         "Please combine them into a single, concise summary:\n\n" + combined
     )
-    final_resp = openai.ChatCompletion.create(
+    final_resp = client.chat.completions.create(
         model=LLM_MODEL,
         messages=[{"role": "user", "content": final_prompt}],
         temperature=0.3,
