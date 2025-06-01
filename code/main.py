@@ -217,6 +217,7 @@ def main_loop():
             "output": next_text,                    # latest generation
             "input_tokens_current": input_tokens,
             "output_tokens_current": output_tokens,
+            "max_tokens_current": max_tokens,
             "total_input_tokens": TOTAL_INPUT_TOKENS,
             "total_output_tokens": TOTAL_OUTPUT_TOKENS,
             "cost": round(cost, 5),
