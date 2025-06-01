@@ -88,7 +88,7 @@ class MemoryManager:
         # 3) Create a unique chunk ID (e.g., timestamp + uuid)
         chunk_id = f"{int(time.time())}_{uuid.uuid4().hex[:8]}"
         # 4) Add summary to LTM (Chroma) via embedding
-        add_memory_chunk(text=chunk_id, metadata={"summary": summary})
+        add_memory_chunk(text=summary, metadata={"chunk_id": chunk_id})
         self.LTM_index.append((chunk_id, summary))
 
         # 5) Remove those pieces from STM_buffer and adjust token count

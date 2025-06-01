@@ -32,7 +32,7 @@ SUMMARY_MODEL = "gpt-4.1-nano"
 CONTEXT_WINDOW_TOKENS = 32_000
 
 # stm
-SUMMARIZE_THRESHOLD_TOKENS = 2_100
+SUMMARIZE_THRESHOLD_TOKENS = 1_100
 # much much summaries to hold from the og size in stm
 MEMORY_CHUNK_TOKENS = SUMMARIZE_THRESHOLD_TOKENS // 2
 # ==============================================================================
@@ -73,7 +73,7 @@ INITIAL_PROMPT = (
 )
 
 RAND_POOL = [
-    "You are STUCK in the same loop. THINK OUTSIDE THE BOX ON THIS ONE"
+    "You are STUCK in the same loop. THINK OUTSIDE THE BOX ON THIS ONE",
     "What are 3 overlooked ways to get rich in tech?",
     "Act as a startup mentor. What would you advise Daley to build?",
     "What would Naval Ravikant say to someone like Daley Fraser?",

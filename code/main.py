@@ -75,26 +75,28 @@ def main_loop():
         start = time.time()
 
         iteration += 1
-        if random.randint(1, 5) == 1:
+        if random.randint(1, 2) == 1:
             system_msg = random.choice(RAND_POOL)
             print('\n\n****\nRandom prompt triggered:', system_msg)
             print('****')
         else:
             system_msg = DEFAULT_CONTINOUS_PROMPT
-        if iteration % 10 == 0:
-            print("📜 Top memories in LTM:")
-            summaries = memory.retrieve_relevant_LTM("progress on P vs NP", top_k=3)
+
+            
+        if iteration % 2 == 0:
+            summaries = memory.retrieve_relevant_LTM("find something cool from ltm", top_k=3)
             for i, summary in enumerate(summaries):
                 snippet = summary.strip().replace("\n", " ")[:120]
                 print(f"  {i+1}. {snippet}...")
+
 
         # 1) Build context with system prompt BEFORE generating
         context = memory.build_context(user_prompt=system_msg)
 
         # 2) Generate the next chunk
         max_tokens = random.choices(
-                    [128, 512, 1024, 2048, 32000],
-            weights=[.5, 0.3, 0.15, 0.04, 0.01],  
+                    [128, 512, 1_024, 2_048, 32_000],
+            weights=[0.5, 0.3,  0.15,  0.04,  0.01],  
             k=1
         )[0]
         print('🧠 Max tokens allowed for next output:', max_tokens)
