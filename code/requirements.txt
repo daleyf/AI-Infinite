@@ -1,4 +1,15 @@
-openai>=1.0.0           # OpenAI Python SDK
-tiktoken>=0.5.0         # Token counting compatible with OpenAI models
-chromadb>=0.7.0         # Local vector database for embeddings
-python-dotenv>=1.0.0    # Load .env file (optional)
+# Core LLM & token‐counting
+openai>=1.0.0
+tiktoken>=0.5.0
+
+# Vector DB for LTM
+chromadb>=0.7.0
+
+# Environment variable loader (if you ever use a .env file)
+python-dotenv>=1.0.0
+
+# Dashboard / UI
+streamlit>=1.22.0
+
+# (Optional) Logging utilities
+rich>=12.0.0
