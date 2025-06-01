@@ -17,29 +17,27 @@ from config import (
 )
 from utils import count_tokens
 from summarizer import summarize_text
-from vector_store import add_memory_chunk, query_similar_memory
+from vector_store import add_to_vector_store as add_memory_chunk
+from vector_store import retrieve_similar_memories as query_similar_memory
+
 
 # Initialize OpenAI
 OpenAI.api_key = OPENAI_API_KEY
 
 class MemoryManager:
     """
-    MemoryManager orchestrates:
       - a short-term buffer (STM_buffer: List[str])
       - periodically summarizing old STM into LTM
       - querying LTM for relevant memory given a “query”
     """
-
+    # ==============================================================================
+    # ==============================================================================
     def __init__(self):
-        # STM will store recent lines of generated text (each element is a string)
-        self.STM_buffer: List[str] = []
-        # Track token count of STM
+        self.STM_buffer: List[str] = []  # stores current chats
         self.STM_token_count = 0
-
-        # We keep a chronological list of summaries in LTM—embedding is stored via Chroma.
-        # Optionally, keep metadata if desired.
         self.LTM_index = []  # list of (chunk_id, summary_text)
-
+    # ==============================================================================
+    # ==============================================================================
     def add_to_STM(self, text: str) -> None:
         """
         add_to_STM(text) -> None
@@ -51,10 +49,11 @@ class MemoryManager:
         self.STM_buffer.append(text)
         self.STM_token_count += tokens
 
-        # If we exceed our STM threshold, compress oldest chunk(s)
+        # exceed STM threshold, move STM --> summarize into LT
         if self.STM_token_count > SUMMARIZE_THRESHOLD_TOKENS:
             self._compress_oldest()
-
+    # ==============================================================================
+    # ==============================================================================
     def _compress_oldest(self) -> None:
         """
         _compress_oldest() -> None
@@ -83,19 +82,20 @@ class MemoryManager:
             pieces_to_remove = 1
 
         # 2) Create a summary
-        summary = summarize_text(collected_text)
+        summary = summarize_text(collected_text)  # imported function from summarizer.py
 
         # 3) Create a unique chunk ID (e.g., timestamp + uuid)
         chunk_id = f"{int(time.time())}_{uuid.uuid4().hex[:8]}"
         # 4) Add summary to LTM (Chroma) via embedding
-        add_memory_chunk(chunk_id, summary)
+        add_memory_chunk(text=chunk_id, metadata={"summary": summary})
         self.LTM_index.append((chunk_id, summary))
 
         # 5) Remove those pieces from STM_buffer and adjust token count
         for _ in range(pieces_to_remove):
             removed = self.STM_buffer.pop(0)
             self.STM_token_count -= count_tokens(removed)
-
+    # ==============================================================================
+    # ==============================================================================
     def retrieve_relevant_LTM(self, query_text: str, top_k: int = 3) -> List[str]:
         """
         retrieve_relevant_LTM(query_text, top_k) -> List of summary_text
@@ -106,9 +106,10 @@ class MemoryManager:
         if not self.LTM_index:
             return []
 
-        results = query_similar_memory(query_text, top_k=top_k)
-        return [r["document"] for r in results]
-
+        results = query_similar_memory(query_text, k=top_k)
+        return results["documents"][0]
+    # ==============================================================================
+    # ==============================================================================
     def build_context(self, user_prompt: str = None) -> str:
         """
         build_context(user_prompt=None) -> str

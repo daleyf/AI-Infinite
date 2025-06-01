@@ -5,13 +5,13 @@ Helper functions, especially for token counting using tiktoken.
 """
 
 import tiktoken
-from config import LLM_MODEL
+from config import SUMMARY_MODEL
 
 # ------------------------------------------------------------------------------
 # 1) Load the tiktoken encoding for our chosen model
 # ------------------------------------------------------------------------------
 try:
-    ENCODER = tiktoken.encoding_for_model(LLM_MODEL)
+    ENCODER = tiktoken.encoding_for_model(SUMMARY_MODEL)
 except KeyError:
     # If the model name isn’t recognized, fall back to a default, e.g., "gpt-3.5-turbo"
     ENCODER = tiktoken.get_encoding("cl100k_base")

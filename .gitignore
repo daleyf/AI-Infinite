@@ -23,7 +23,7 @@ env/
 
 # Logs
 *.log
-logs/stream.txt
+code/logs/stream.txt
 
 # Output / artifacts
 *.out
@@ -53,3 +53,4 @@ build/
 # Local SQLite or other scratch files
 *.db
 *.sqlite3
+*.bin

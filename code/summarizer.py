@@ -6,7 +6,7 @@ Functions to compress large text into a concise “memory chunk” using GPT.
 
 from openai import OpenAI
 client = OpenAI()
-from config import LLM_MODEL, OPENAI_API_KEY
+from config import SUMMARY_MODEL, OPENAI_API_KEY
 from utils import count_tokens, chunk_text_by_tokens
 
 # Initialize the OpenAI client
@@ -27,19 +27,23 @@ def summarize_text(text: str, max_tokens: int = 512) -> str:
     Returns:
       A string that is the approximate summary of `text`.
     """
-    LLM_MODEL = "gpt-4.1-nano"
-    # 1) If text is small enough, call GPT directly:
+
+    # ==============================================================================
+    # PART 1: small enough to just summarize directly
+    # ==============================================================================
     if count_tokens(text) < 6_000:  # choose a threshold comfortably under the model’s input limit
         prompt = f"Please provide a concise summary (1–2 paragraphs) of the following text:\n\n{text}"
         response = client.chat.completions.create(
-            model=LLM_MODEL,  # or whatever summarization model you're using
+            model=SUMMARY_MODEL,  # or whatever summarization model you're using
             messages=[{"role": "user", "content": prompt}],
             temperature=0.3,
             max_tokens=max_tokens
         )
         return response.choices[0].message.content.strip()
 
-    # 2) Otherwise, break into sub-chunks, summarize each, then concatenate and re-summarize:
+    # ==============================================================================
+    # PART 2: break into sub-chunks, summarize each, then concatenate and re-summarize:
+    # ==============================================================================
     chunks = chunk_text_by_tokens(text, max_tokens=4_000)
     partial_summaries = []
     for i, c in enumerate(chunks):
@@ -48,7 +52,7 @@ def summarize_text(text: str, max_tokens: int = 512) -> str:
             "Summarize the following text into 1 paragraph:\n\n" + c
         )
         resp = client.chat.completions.create(
-            model=LLM_MODEL,
+            model=SUMMARY_MODEL,
             messages=[{"role": "user", "content": prompt_chunk}],
             temperature=0.3,
             max_tokens=max_tokens // len(chunks)
@@ -62,7 +66,7 @@ def summarize_text(text: str, max_tokens: int = 512) -> str:
         "Please combine them into a single, concise summary:\n\n" + combined
     )
     final_resp = client.chat.completions.create(
-        model=LLM_MODEL,
+        model=SUMMARY_MODEL,
         messages=[{"role": "user", "content": final_prompt}],
         temperature=0.3,
         max_tokens=max_tokens

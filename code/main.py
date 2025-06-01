@@ -15,23 +15,22 @@ client = OpenAI()
 import time
 from config import (
     OPENAI_API_KEY,
-    LLM_MODEL,
+    INFINITE_MODEL,
     API_CALL_SLEEP_SEC
 )
 import random
 from memory_manager import MemoryManager
 from logger import log_text
+import tiktoken
 # ==============================================================================
-# 1) Initialize OpenAI client & memory manager
+# 1) init OpenAI & memory manager
 # ==============================================================================
 OpenAI.api_key = OPENAI_API_KEY
 memory = MemoryManager()
 # ==============================================================================
-# 2) Starting prompt
+# 2) prompt
 # ==============================================================================
 INITIAL_PROMPT = "Hi, you are artificial general intelligence. You are prompted continously and with recursivley become AGI."
-
-# Add the initial prompt to STM right away:
 memory.add_to_STM(INITIAL_PROMPT)
 # ==============================================================================
 # ==============================================================================
@@ -40,18 +39,18 @@ def generate_next_chunk(context: str, max_tokens: int = 512, temperature: float 
     Generates the next chunk of tokens using OpenAI's Chat API (v1.0+).
     """
     response = client.chat.completions.create(
-        model="gpt-4.1-nano",  # You can use "o4-mini-high" or "gpt-4o"
+        model=INFINITE_MODEL,
         messages=[{"role": "user", "content": context}],
         temperature=temperature,
         max_tokens=max_tokens
     )
-    return response.choices[0].message.content
+    content = response.choices[0].message.content
+    usage = response.usage  # contains input/output token counts
+    return content, usage.prompt_tokens, usage.completion_tokens
 # ==============================================================================
 # ==============================================================================
 def main_loop():
     """
-    main_loop() -> None
-
     1. Build the current context (LTM summaries + STM_buffer)
     2. Generate the next chunk from GPT
     3. Add generated text to STM
@@ -59,6 +58,13 @@ def main_loop():
     5. Sleep a bit to respect rate limits
     6. Repeat forever
     """
+    # token tracking
+    TOTAL_INPUT_TOKENS = 0
+    TOTAL_OUTPUT_TOKENS = 0
+
+    # Pricing per million tokens for gpt-4.1-nano
+    INPUT_COST = 0.10 / 1_000_000
+    OUTPUT_COST = 0.40 / 1_000_000
     iteration = 0
     prompt_pool = [
         "Disagree with your last idea.",
@@ -71,7 +77,7 @@ def main_loop():
 
     while True:
         iteration += 1
-        if iteration % 4 == 0:
+        if random.randint(1, 5) == 1:
             system_msg = random.choice(prompt_pool)
         else:
             system_msg = (
@@ -83,7 +89,9 @@ def main_loop():
         context = memory.build_context(user_prompt=system_msg)
 
         # 2) Generate the next chunk
-        next_text = generate_next_chunk(context)
+        next_text, input_tokens, output_tokens = generate_next_chunk(context)
+        TOTAL_INPUT_TOKENS += input_tokens
+        TOTAL_OUTPUT_TOKENS += output_tokens
 
         # 3) Add it to STM (this allows memory compression and context chaining)
         memory.add_to_STM(next_text)
@@ -91,7 +99,11 @@ def main_loop():
         # 4) Log to disk so we can inspect afterward
         log_text(next_text)
 
-        print(f"[Iteration {iteration}] Generated {len(next_text)} characters, {len(next_text.split())} words.")
+        cost = (TOTAL_INPUT_TOKENS * INPUT_COST) + (TOTAL_OUTPUT_TOKENS * OUTPUT_COST)
+        if cost >= 1.00:
+            print(f"💸 Reached cost cap of $1.00. Stopping. Total tokens: {TOTAL_INPUT_TOKENS + TOTAL_OUTPUT_TOKENS}")
+            break
+        print(f"[{iteration}] ✅ {len(next_text.split())} words | 💰 Est. cost: ${cost:.4f}")
         print("-")
         print("-")
         print("-")
@@ -102,11 +114,8 @@ def main_loop():
 # ==============================================================================
 if __name__ == "__main__":
     try:
-        print("🚀 Starting infinite GPT loop. Press Ctrl+C to stop.")
+        print("🚀 Infinite GPT loop started. Press Ctrl+C to stop.")
         main_loop()
     except KeyboardInterrupt:
-        print("\n⏹️  Stopping loop. Persisting vector store to disk...")
-        # If using Chroma, do:
-        from vector_store import persist_vector_store
-        persist_vector_store()
-        print("✅ Vector store saved. Goodbye!")
+        print("\n⏹️  Keyboard interrupt received. Saving vector store...")
+        print("👋 Goodbye!")
