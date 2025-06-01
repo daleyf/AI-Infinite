@@ -83,11 +83,14 @@ def main_loop():
             system_msg = DEFAULT_CONTINOUS_PROMPT
 
             
+      
         if iteration % 2 == 0:
-            summaries = memory.retrieve_relevant_LTM("find something cool from ltm", top_k=3)
+            print("📜 Top memories in LTM:")
+            summaries = memory.retrieve_relevant_LTM("find something random/ unexpected from ltm", top_k=3)
             for i, summary in enumerate(summaries):
-                snippet = summary.strip().replace("\n", " ")[:120]
+                snippet = summary.strip().replace("\n", " ")[:200]
                 print(f"  {i+1}. {snippet}...")
+
 
 
         # 1) Build context with system prompt BEFORE generating
@@ -119,14 +122,6 @@ def main_loop():
 
         # 4) Log to disk so we can inspect afterward
         log_text(next_text)  
-
-        if next_text.lower() == "qed":
-            print('🎉 SUCCESS! The AI claims to have solved P = NP.')
-            print('🧠 Top LTM memories at exit:')
-            summaries = memory.retrieve_relevant_LTM("recent discoveries", top_k=3)
-            for i, s in enumerate(summaries):
-                print(f"  {i+1}. {s[:100]}...")
-            sys.exit()
 
         cost = (TOTAL_INPUT_TOKENS * INPUT_COST) + (TOTAL_OUTPUT_TOKENS * OUTPUT_COST)
         if cost >= 1.00:

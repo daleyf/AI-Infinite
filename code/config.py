@@ -32,7 +32,7 @@ SUMMARY_MODEL = "gpt-4.1-nano"
 CONTEXT_WINDOW_TOKENS = 32_000
 
 # stm
-SUMMARIZE_THRESHOLD_TOKENS = 1_100
+SUMMARIZE_THRESHOLD_TOKENS = 4096
 # much much summaries to hold from the og size in stm
 MEMORY_CHUNK_TOKENS = SUMMARIZE_THRESHOLD_TOKENS // 2
 # ==============================================================================
