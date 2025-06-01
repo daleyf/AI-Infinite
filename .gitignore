@@ -24,6 +24,7 @@ env/
 # Logs
 *.log
 code/logs/stream.txt
+code/dashboard_state.json
 
 # Output / artifacts
 *.out

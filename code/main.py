@@ -132,6 +132,7 @@ def main_loop():
         iter_start = time.time()
 
         iteration += 1
+        print(f"[Iteration {iteration}]")
         if random.randint(1, 2) == 1:
             system_msg = random.choice(RAND_POOL)
             # print('\n\n****\nRandom prompt triggered:', system_msg)
@@ -225,7 +226,6 @@ def main_loop():
         }
         update_dashboard_state(state)
         time.sleep(API_CALL_SLEEP_SEC)
-        # print(f"[Iteration {iteration}]")
         # print(f"[Iteration {iteration}] ✅ {len(next_text.split())} words | STM: {TOTAL_OUTPUT_TOKENS % SUMMARIZE_THRESHOLD_TOKENS} / {SUMMARIZE_THRESHOLD_TOKENS} | 💰 Est. cost: ${cost:.4f}")
         # print('input tokens:', input_tokens, 'total', TOTAL_INPUT_TOKENS)
         # print('output tokens:', output_tokens, 'total', TOTAL_OUTPUT_TOKENS)
