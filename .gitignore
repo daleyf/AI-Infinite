@@ -35,7 +35,6 @@ code/logs/stream.txt
 *.egg-info/
 
 # Config files and secrets (if you use them)
-config.py
 *.env
 *.key
 *.pem

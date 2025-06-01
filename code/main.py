@@ -102,7 +102,13 @@ def main_loop():
             context + 
             f"\n(Note: You may use up to {max_tokens} tokens for this response. Use them all)"
         )
+
+        # ==============================================================================
+        # generation here
+        # ==============================================================================
         next_text, input_tokens, output_tokens = generate_next_chunk(context_tokens + "in this iteration", max_tokens)
+        # ==============================================================================
+
         TOTAL_INPUT_TOKENS += input_tokens
         TOTAL_OUTPUT_TOKENS += output_tokens
 
@@ -124,7 +130,7 @@ def main_loop():
         if cost >= 1.00:
             print(f"💸 Reached cost cap of $1.00. Stopping. Total tokens: {TOTAL_INPUT_TOKENS + TOTAL_OUTPUT_TOKENS}")
             break
-        print(f"[{iteration}] ✅ {len(next_text.split())} words | STM: {TOTAL_OUTPUT_TOKENS % SUMMARIZE_THRESHOLD_TOKENS} / {SUMMARIZE_THRESHOLD_TOKENS} | 💰 Est. cost: ${cost:.4f}")
+        print(f"[Iteration {iteration}] ✅ {len(next_text.split())} words | STM: {TOTAL_OUTPUT_TOKENS % SUMMARIZE_THRESHOLD_TOKENS} / {SUMMARIZE_THRESHOLD_TOKENS} | 💰 Est. cost: ${cost:.4f}")
         print('input tokens:', input_tokens, 'total', TOTAL_INPUT_TOKENS)
         print('output tokens:', output_tokens, 'total', TOTAL_OUTPUT_TOKENS)
         end = time.time()
