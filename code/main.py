@@ -16,12 +16,17 @@ import time
 from config import (
     OPENAI_API_KEY,
     INFINITE_MODEL,
-    API_CALL_SLEEP_SEC
+    SUMMARIZE_THRESHOLD_TOKENS,
+    API_CALL_SLEEP_SEC,
+    INITIAL_PROMPT, 
+    RAND_POOL,
+    DEFAULT_CONTINOUS_PROMPT,
 )
 import random
 from memory_manager import MemoryManager
 from logger import log_text
 import tiktoken
+import sys
 # ==============================================================================
 # 1) init OpenAI & memory manager
 # ==============================================================================
@@ -30,7 +35,6 @@ memory = MemoryManager()
 # ==============================================================================
 # 2) prompt
 # ==============================================================================
-INITIAL_PROMPT = "Hi, you are artificial general intelligence. You are prompted continously and with recursivley become AGI."
 memory.add_to_STM(INITIAL_PROMPT)
 # ==============================================================================
 # ==============================================================================
@@ -66,30 +70,39 @@ def main_loop():
     INPUT_COST = 0.10 / 1_000_000
     OUTPUT_COST = 0.40 / 1_000_000
     iteration = 0
-    prompt_pool = [
-        "Disagree with your last idea.",
-        "Play devil's advocate to what you just wrote.",
-        "Ask yourself a hard question and try to answer it.",
-        "Shift to a different domain: biology, psychology, ethics.",
-        "Describe a fictional world where AGI already exists.",
-        "Write a memory or a dream of an AGI being trained."
-    ]
 
     while True:
+        start = time.time()
+
         iteration += 1
         if random.randint(1, 5) == 1:
-            system_msg = random.choice(prompt_pool)
+            system_msg = random.choice(RAND_POOL)
+            print('\n\n****\nRandom prompt triggered:', system_msg)
+            print('****')
         else:
-            system_msg = (
-                "Continue your train of thought from the last message. "
-                "Do not repeat ideas exactly. Build forward. Ask new questions, propose ideas, or simulate thought."
-            )
+            system_msg = DEFAULT_CONTINOUS_PROMPT
+        if iteration % 10 == 0:
+            print("📜 Top memories in LTM:")
+            summaries = memory.retrieve_relevant_LTM("progress on P vs NP", top_k=3)
+            for i, summary in enumerate(summaries):
+                snippet = summary.strip().replace("\n", " ")[:120]
+                print(f"  {i+1}. {snippet}...")
 
         # 1) Build context with system prompt BEFORE generating
         context = memory.build_context(user_prompt=system_msg)
 
         # 2) Generate the next chunk
-        next_text, input_tokens, output_tokens = generate_next_chunk(context)
+        max_tokens = random.choices(
+                    [128, 512, 1024, 2048, 32000],
+            weights=[.5, 0.3, 0.15, 0.04, 0.01],  
+            k=1
+        )[0]
+        print('🧠 Max tokens allowed for next output:', max_tokens)
+        context_tokens = (
+            context + 
+            f"\n(Note: You may use up to {max_tokens} tokens for this response. Use them all)"
+        )
+        next_text, input_tokens, output_tokens = generate_next_chunk(context_tokens + "in this iteration", max_tokens)
         TOTAL_INPUT_TOKENS += input_tokens
         TOTAL_OUTPUT_TOKENS += output_tokens
 
@@ -97,13 +110,29 @@ def main_loop():
         memory.add_to_STM(next_text)
 
         # 4) Log to disk so we can inspect afterward
-        log_text(next_text)
+        log_text(next_text)  
+
+        if next_text.lower() == "qed":
+            print('🎉 SUCCESS! The AI claims to have solved P = NP.')
+            print('🧠 Top LTM memories at exit:')
+            summaries = memory.retrieve_relevant_LTM("recent discoveries", top_k=3)
+            for i, s in enumerate(summaries):
+                print(f"  {i+1}. {s[:100]}...")
+            sys.exit()
 
         cost = (TOTAL_INPUT_TOKENS * INPUT_COST) + (TOTAL_OUTPUT_TOKENS * OUTPUT_COST)
         if cost >= 1.00:
             print(f"💸 Reached cost cap of $1.00. Stopping. Total tokens: {TOTAL_INPUT_TOKENS + TOTAL_OUTPUT_TOKENS}")
             break
-        print(f"[{iteration}] ✅ {len(next_text.split())} words | 💰 Est. cost: ${cost:.4f}")
+        print(f"[{iteration}] ✅ {len(next_text.split())} words | STM: {TOTAL_OUTPUT_TOKENS % SUMMARIZE_THRESHOLD_TOKENS} / {SUMMARIZE_THRESHOLD_TOKENS} | 💰 Est. cost: ${cost:.4f}")
+        print('input tokens:', input_tokens, 'total', TOTAL_INPUT_TOKENS)
+        print('output tokens:', output_tokens, 'total', TOTAL_OUTPUT_TOKENS)
+        end = time.time()
+        print(f"⏱️ Iteration time: {end - start:.2f} sec")
+        total_end = time.time()  # ← End total timer
+        duration = total_end - total_start
+        mins, secs = divmod(duration, 60)
+        print(f"⏳ Total runtime: {int(mins)} min {int(secs)} sec")
         print("-")
         print("-")
         print("-")
@@ -115,6 +144,7 @@ def main_loop():
 if __name__ == "__main__":
     try:
         print("🚀 Infinite GPT loop started. Press Ctrl+C to stop.")
+        total_start = time.time()  # ← Start total timer
         main_loop()
     except KeyboardInterrupt:
         print("\n⏹️  Keyboard interrupt received. Saving vector store...")

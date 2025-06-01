@@ -51,6 +51,7 @@ class MemoryManager:
 
         # exceed STM threshold, move STM --> summarize into LT
         if self.STM_token_count > SUMMARIZE_THRESHOLD_TOKENS:
+            print('\n\n****\nSTM token reached, moving to LTM\n****\n\n')
             self._compress_oldest()
     # ==============================================================================
     # ==============================================================================
@@ -96,18 +97,9 @@ class MemoryManager:
             self.STM_token_count -= count_tokens(removed)
     # ==============================================================================
     # ==============================================================================
-    def retrieve_relevant_LTM(self, query_text: str, top_k: int = 3) -> List[str]:
-        """
-        retrieve_relevant_LTM(query_text, top_k) -> List of summary_text
-
-        Looks up similar memory chunks in LTM based on `query_text`,
-        returns their summary_texts so we can inject them into context.
-        """
-        if not self.LTM_index:
-            return []
-
+    def retrieve_relevant_LTM(self, query_text: str, top_k: int = 3):
         results = query_similar_memory(query_text, k=top_k)
-        return results["documents"][0]
+        return results["documents"][0]  # returns a list of top-k document texts
     # ==============================================================================
     # ==============================================================================
     def build_context(self, user_prompt: str = None) -> str:

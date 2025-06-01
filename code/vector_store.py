@@ -28,6 +28,7 @@ def retrieve_similar_memories(query: str, k: int = 3):
     """
     Retrieve top-k similar memories based on semantic similarity.
     """
+    print('\nfetching from LTM\n')
     return collection.query(
         query_texts=[query],
         n_results=k

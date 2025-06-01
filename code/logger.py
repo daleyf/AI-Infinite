@@ -19,8 +19,8 @@ def log_text(text: str) -> None:
         f.write(time_and_date + "\n" + text + "\n\n")
 
     # Print cleanly to terminal
-    print(time_and_date)     # ✅ Prints on two lines
     print(text.strip())      # ✅ Prints your log content
     print("=" * 40)
+    print(time_and_date)     # ✅ Prints on two lines
     
 
