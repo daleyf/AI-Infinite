@@ -20,7 +20,7 @@ from config import (
     API_CALL_SLEEP_SEC,
     INITIAL_PROMPT, 
     RAND_POOL,
-    DEFAULT_CONTINOUS_PROMPT,
+    CONTINUOUS_PROMPT_POOL,
 )
 import random
 from memory_manager import MemoryManager
@@ -32,10 +32,51 @@ import sys
 # ==============================================================================
 OpenAI.api_key = OPENAI_API_KEY
 memory = MemoryManager()
-# ==============================================================================
-# 2) prompt
-# ==============================================================================
 memory.add_to_STM(INITIAL_PROMPT)
+# ==============================================================================
+# ==============================================================================
+
+# ==============================================================================
+# dashboard
+# ==============================================================================
+import json
+from pathlib import Path
+DASHBOARD_PATH = Path(__file__).parent / "dashboard_state.json"
+
+
+def update_dashboard_state(entry):
+    if DASHBOARD_PATH.exists():
+        try:
+            data = json.loads(DASHBOARD_PATH.read_text())
+            history = data.get("all_outputs", [])
+        except Exception:
+            history = []
+    else:
+        history = []
+
+    history.append(entry)
+    with open(DASHBOARD_PATH, "w") as f:
+        json.dump({"all_outputs": history}, f, indent=2)
+
+
+def format_runtime(seconds: float) -> str:
+    secs = int(seconds)
+    days, secs = divmod(secs, 86400)
+    hours, secs = divmod(secs, 3600)
+    mins, secs = divmod(secs, 60)
+    parts = []
+    if days:
+        parts.append(f"{days}d")
+    if hours or days:
+        parts.append(f"{hours}h")
+    if mins or hours or days:
+        parts.append(f"{mins}m")
+    parts.append(f"{secs}s")
+    return " ".join(parts)        
+# ==============================================================================
+# ==============================================================================
+
+
 # ==============================================================================
 # ==============================================================================
 def generate_next_chunk(context: str, max_tokens: int = 512, temperature: float = 0.9) -> str:
@@ -54,6 +95,7 @@ def generate_next_chunk(context: str, max_tokens: int = 512, temperature: float 
 # ==============================================================================
 # ==============================================================================
 def main_loop():
+    total_start = time.time()
     """
     1. Build the current context (LTM summaries + STM_buffer)
     2. Generate the next chunk from GPT
@@ -71,25 +113,33 @@ def main_loop():
     OUTPUT_COST = 0.40 / 1_000_000
     iteration = 0
 
+    # If the dashboard file already exists from a prior run, remove it so we start fresh:
+    if DASHBOARD_PATH.exists():
+        DASHBOARD_PATH.unlink()
+
     while True:
-        start = time.time()
+        iter_start = time.time()
 
         iteration += 1
+        print(f"[Iteration {iteration}]")
         if random.randint(1, 2) == 1:
             system_msg = random.choice(RAND_POOL)
-            print('\n\n****\nRandom prompt triggered:', system_msg)
-            print('****')
+            # print('\n\n****\nRandom prompt triggered:', system_msg)
+            # print('****') 
         else:
-            system_msg = DEFAULT_CONTINOUS_PROMPT
+            system_msg = random.choice(CONTINUOUS_PROMPT_POOL)
+            # print('\n\n****\nSystem prompt:', system_msg)
+            # print('****') 
+           
 
             
       
         if iteration % 2 == 0:
-            print("📜 Top memories in LTM:")
+            # print("📜 Top memories in LTM:")
             summaries = memory.retrieve_relevant_LTM("find something random/ unexpected from ltm", top_k=3)
             for i, summary in enumerate(summaries):
                 snippet = summary.strip().replace("\n", " ")[:200]
-                print(f"  {i+1}. {snippet}...")
+                # print(f"  {i+1}. {snippet}...")
 
 
 
@@ -102,7 +152,7 @@ def main_loop():
             weights=[0.5, 0.3,  0.15,  0.04,  0.01],  
             k=1
         )[0]
-        print('🧠 Max tokens allowed for next output:', max_tokens)
+        # print('🧠 Max tokens allowed for next output:', max_tokens)
         context_tokens = (
             context + 
             f"\n(Note: You may use up to {max_tokens} tokens for this response. Use them all)"
@@ -127,27 +177,56 @@ def main_loop():
         if cost >= 1.00:
             print(f"💸 Reached cost cap of $1.00. Stopping. Total tokens: {TOTAL_INPUT_TOKENS + TOTAL_OUTPUT_TOKENS}")
             break
-        print(f"[Iteration {iteration}] ✅ {len(next_text.split())} words | STM: {TOTAL_OUTPUT_TOKENS % SUMMARIZE_THRESHOLD_TOKENS} / {SUMMARIZE_THRESHOLD_TOKENS} | 💰 Est. cost: ${cost:.4f}")
-        print('input tokens:', input_tokens, 'total', TOTAL_INPUT_TOKENS)
-        print('output tokens:', output_tokens, 'total', TOTAL_OUTPUT_TOKENS)
-        end = time.time()
-        print(f"⏱️ Iteration time: {end - start:.2f} sec")
-        total_end = time.time()  # ← End total timer
-        duration = total_end - total_start
-        mins, secs = divmod(duration, 60)
-        print(f"⏳ Total runtime: {int(mins)} min {int(secs)} sec")
-        print("-")
-        print("-")
-        print("-")
-        print("=" * 40)
-        # 5) Sleep to avoid hitting rate limits
+        
+        iteration_time = time.time() - iter_start
+        total_runtime = time.time() - total_start
+
+
+
+
+
+
+        # ==============================================================================
+        # dashboard and logging
+        # ==============================================================================
+        stm_tokens = memory.STM_token_count
+
+        # Fetch the top-3 LTM summaries (each iteration, to display in dashboard)
+        fetched_ltm = memory.retrieve_relevant_LTM(
+            "find something random/ unexpected from ltm", top_k=3
+        )
+        # ─────────────────────────────────────────────────────────────────
+        # j) Build the state dict exactly matching the tracked variables
+        # ─────────────────────────────────────────────────────────────────
+        iteration_metadata = {
+            "id": iteration,
+            "text": next_text,
+            "prompt": system_msg,
+            "tokens": {
+                "in": input_tokens,
+                "out": output_tokens
+            },
+            "runtime_seconds": round(time.time() - iter_start, 2),
+            "total_runtime_seconds": round(time.time() - total_start, 2),
+            "cost": round(cost, 5)
+        }
+
+        update_dashboard_state(iteration_metadata)
         time.sleep(API_CALL_SLEEP_SEC)
+        # print(f"[Iteration {iteration}] ✅ {len(next_text.split())} words | STM: {TOTAL_OUTPUT_TOKENS % SUMMARIZE_THRESHOLD_TOKENS} / {SUMMARIZE_THRESHOLD_TOKENS} | 💰 Est. cost: ${cost:.4f}")
+        # print('input tokens:', input_tokens, 'total', TOTAL_INPUT_TOKENS)
+        # print('output tokens:', output_tokens, 'total', TOTAL_OUTPUT_TOKENS)
+        # print(f"⏱️ Iteration time: {iteration_time} sec")
+        # print(f"⏳ Total runtime: {total_runtime} sec")
+        # print("-")
+        # print("-")
+        # print("-")
+        # print("=" * 40)
 # ==============================================================================
 # ==============================================================================
 if __name__ == "__main__":
     try:
         print("🚀 Infinite GPT loop started. Press Ctrl+C to stop.")
-        total_start = time.time()  # ← Start total timer
         main_loop()
     except KeyboardInterrupt:
         print("\n⏹️  Keyboard interrupt received. Saving vector store...")
