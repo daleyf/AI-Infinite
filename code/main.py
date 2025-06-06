@@ -44,30 +44,19 @@ from pathlib import Path
 DASHBOARD_PATH = Path(__file__).parent / "dashboard_state.json"
 
 
-def update_dashboard_state(state: dict):
-    """
-    Overwrite dashboard_state.json with the latest iteration state,
-    including appending the current output to "all_outputs" (history).
-    """
-    # If this file already exists, load it to retrieve previous outputs:
+def update_dashboard_state(entry):
     if DASHBOARD_PATH.exists():
         try:
-            existing = json.loads(DASHBOARD_PATH.read_text())
-            history = existing.get("all_outputs", [])
+            data = json.loads(DASHBOARD_PATH.read_text())
+            history = data.get("all_outputs", [])
         except Exception:
             history = []
     else:
         history = []
 
-    # Append the newest output to the history list:
-    new_history = history + [state["output"]]
-
-    # Overwrite state["all_outputs"] with the updated history:
-    state["all_outputs"] = new_history
-
-    # Write the updated state back to disk:
+    history.append(entry)
     with open(DASHBOARD_PATH, "w") as f:
-        json.dump(state, f, indent=2)
+        json.dump({"all_outputs": history}, f, indent=2)
 
 
 def format_runtime(seconds: float) -> str:
@@ -209,23 +198,20 @@ def main_loop():
         # ─────────────────────────────────────────────────────────────────
         # j) Build the state dict exactly matching the tracked variables
         # ─────────────────────────────────────────────────────────────────
-        state = {
-            "iteration": iteration,
-            "system_prompt": system_msg,
-            "stm_tokens": stm_tokens,
-            "fetched_ltm_summaries": fetched_ltm,   # list of strings
-            "output": next_text,                    # latest generation
-            "input_tokens_current": input_tokens,
-            "output_tokens_current": output_tokens,
-            "max_tokens_current": max_tokens,
-            "total_input_tokens": TOTAL_INPUT_TOKENS,
-            "total_output_tokens": TOTAL_OUTPUT_TOKENS,
-            "cost": round(cost, 5),
-            "total_cost": round(cost, 5),
-            "iteration_time_seconds": round(iteration_time, 2),
-            "total_runtime_seconds": round(total_runtime, 2),
+        iteration_metadata = {
+            "id": iteration,
+            "text": next_text,
+            "prompt": system_msg,
+            "tokens": {
+                "in": input_tokens,
+                "out": output_tokens
+            },
+            "runtime_seconds": round(time.time() - iter_start, 2),
+            "total_runtime_seconds": round(time.time() - total_start, 2),
+            "cost": round(cost, 5)
         }
-        update_dashboard_state(state)
+
+        update_dashboard_state(iteration_metadata)
         time.sleep(API_CALL_SLEEP_SEC)
         # print(f"[Iteration {iteration}] ✅ {len(next_text.split())} words | STM: {TOTAL_OUTPUT_TOKENS % SUMMARIZE_THRESHOLD_TOKENS} / {SUMMARIZE_THRESHOLD_TOKENS} | 💰 Est. cost: ${cost:.4f}")
         # print('input tokens:', input_tokens, 'total', TOTAL_INPUT_TOKENS)
