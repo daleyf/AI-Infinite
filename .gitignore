@@ -54,3 +54,7 @@ build/
 *.db
 *.sqlite3
 *.bin
+*.gguf
+
+# Local models
+llama.cpp/

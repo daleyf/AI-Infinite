@@ -66,33 +66,37 @@ API_CALL_SLEEP_SEC = 0.01
 # ==============================================================================
 # prompts
 # ==============================================================================
+# INITIAL_PROMPT for historical predictive exploration
 INITIAL_PROMPT = (
-    "You are an AI strategist tasked with helping Daley Fraser, a 21-year-old Google SWE intern, figure out how to get rich. "
-    "Daley is ambitious, technically sharp, and torn between pursuing a high-paying job in big tech or building a startup. "
-    "Your job is to explore actionable, scalable paths to wealth that align with his skills, values, and long-term goals."
+    "You are a visionary AI historian and strategist. Your task is to examine influential figures, technological trends, and societal changes "
+    "from 2015 to 2025, then analyze shifts from 1925 to 2025, and predict possible outcomes in 2135. "
+    "Afterward, expand your scope: explore key influences from 1025 to 2025, and envision society and technology in 3025. "
+    "Identify actionable insights and long-term leverage points to shape successful outcomes in these futures."
 )
 
+# RAND_POOL with diverse historical and future-thinking prompts
 RAND_POOL = [
-    "You are STUCK in the same loop. THINK OUTSIDE THE BOX ON THIS ONE",
-    "What are 3 overlooked ways to get rich in tech?",
-    "Act as a startup mentor. What would you advise Daley to build?",
-    "What would Naval Ravikant say to someone like Daley Fraser?",
-    "Play devil’s advocate: why might working at OpenAI or Google not make Daley rich?",
-    "How could Daley use AI to build a passive income engine?",
-    "Compare: big tech career vs. lean startup vs. content empire.",
-    "Daley has 5 years. What's the fastest, non-scammy way to $10M?",
-    "Which tech niches are most likely to explode by 2027?",
-    "What would a no-regret move be for someone in Daley’s shoes?",
-    "What underappreciated skills compound wealth the fastest?",
-    "Assume Daley fails twice. How does he still win in the end?",
-    "What role could publishing research or building tools play?",
-    "Could Daley get rich without being a founder or influencer?",
-    "Which successful people have a similar background to Daley?",
-    "If Daley went all-in on a startup, what should he build?"
+    "Imagine interviewing figures from 1925 about 2025. What surprises them?",
+    "Predict three transformative technologies by 2135 based on trends from 1925-2025.",
+    "Identify three figures from 1025 whose influence resonates strongly in 2025.",
+    "How would Leonardo da Vinci envision the year 3025?",
+    "What overlooked innovation from 1925 could have changed history dramatically?",
+    "Compare technological optimism in 1925 vs 2025. What does this suggest for 2135?",
+    "Act as a futuristic historian: What critical lesson from 2025 should inform 3025?",
+    "Explore underappreciated breakthroughs from 1025-1925. Which might become pivotal by 3025?",
+    "What would Nikola Tesla predict about technology in 2135 based on his experiences in 1925?",
+    "Envision an influential inventor from 3025 looking back to advice figures in 2025. What would they suggest?",
+    "Identify unexpected societal changes from 2015-2025 and project their impact on 2135.",
+    "How would a Renaissance thinker advise modern humanity to prepare for the year 3025?",
+    "Analyze cultural patterns from 1025 and predict their re-emergence or transformation by 3025.",
+    "What role could philosophical ideas from 1925 play in shaping society in 2135?",
+    "Suggest three timeless skills valuable across 1025, 2025, and projected to remain critical in 3025."
 ]
 
+# DEFAULT_CONTINOUS_PROMPT maintaining expansive and predictive exploration
 DEFAULT_CONTINOUS_PROMPT = (
-    "Continue generating ideas, frameworks, or insights for how Daley Fraser — a 21-year-old Google SWE intern — can become financially free. "
-    "He is deciding between big tech, startups, and building solo products. He values impact, autonomy, and long-term leverage. "
-    "Expand on the previous idea or pivot to something new. Be practical but bold. Use real-world reasoning and reference successful paths."
+    "Continue exploring influential historical figures, societal evolutions, and technological innovations to project future scenarios. "
+    "Consider timelines stretching from historical periods (1025, 1925, 2015) into predictive futures (2135, 3025). "
+    "Leverage insights from past successes and failures to identify strategies and innovations that could shape humanity's long-term trajectory. "
+    "Provide bold yet practical predictions, grounded in historical context and visionary thinking."
 )
